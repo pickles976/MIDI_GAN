@@ -1,0 +1,7 @@
+requests
+mido==1.2.9
+music21
+Flask
+flask_cors
+numpy
+opencv-python

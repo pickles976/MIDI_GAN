@@ -4,10 +4,52 @@ import cv2
 
 # 128x128 = 16384
 # 256x256 = 65,536
-MIN_NOTE = 32 # smallest possible note, 32nd note
+MIN_NOTE = 64 # smallest possible note, 32nd note
 DIM = 256 
 SIZE = DIM ** 2
 NUM_TRACKS = 4
+
+def preProcess(song,newsong):
+
+    midi = MidiFile(song)
+
+    tpb = midi.ticks_per_beat   # normalize the ticks per beat
+    midi.ticks_per_beat = MIN_NOTE
+    div = tpb / MIN_NOTE
+
+    # remove duplicate tracks
+    message_numbers = []
+    duplicates = []
+
+    for track in midi.tracks:
+        if len(track) in message_numbers:
+            duplicates.append(track)
+        else:
+            message_numbers.append(len(track))
+
+    for track in duplicates:
+        midi.tracks.remove(track)
+
+    # loop through all midi tracks
+    for track in midi.tracks:
+        
+        print(track)
+
+        i = 0
+        for message in track:
+
+            # normalize time, 1 == 32nd note
+            if message.time:
+                message.time = int(message.time / div)
+
+            # normalize data format
+            if message.type and message.type == "note_off":
+                track[i] = Message('note_on', channel=message.channel,note=message.note, velocity=0, time=message.time)
+
+            i += 1
+
+    # save the midi with normalized timestamps
+    midi.save(newsong)
 
 def pngToMidi(imgfile,midifile):
 
@@ -28,7 +70,7 @@ def pngToMidi(imgfile,midifile):
         midi.ticks_per_beat = MIN_NOTE
 
         # start song
-        track.append(MetaMessage("set_tempo",tempo=324324,time=0))
+        track.append(MetaMessage("set_tempo",tempo=500000,time=0))
         # set instrument
         track.append(Message('program_change', program=87, time=0))
         track.append(Message('control_change', channel=0, control=10, value=64, time=0))
@@ -68,18 +110,19 @@ def midiToPng(song,image):
     n = 0
     for midiTrack in midi.tracks:
 
-        print(midiTrack)
         if len(midiTrack) > 24:
 
             track = [t for t in reversed(midiTrack)]
 
             i = offset * n # pointer to array index
+            lim = offset * (n + 1)
             curNote = 0
             count = 0 # duration of current note
             lastCtrl = False # if the last message was a control message
-            while len(track) > 0:
+            while len(track) > 0 and i < lim:
 
                 message = track.pop()
+                # print(message)
 
                 if not message.is_meta:
 
@@ -110,6 +153,7 @@ def midiToPng(song,image):
     cv2.imwrite(image,array)
 
 if __name__ == "__main__":
+
 
     midiToPng("new_song.mid","song.png")
     pngToMidi("song.png","png_song.mid")

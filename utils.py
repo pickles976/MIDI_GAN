@@ -2,20 +2,19 @@ from mido import MidiFile, MidiTrack, Message, MetaMessage
 import numpy as np
 import cv2
 
-MIN_NOTE = 32
+# 128x128 = 16384
+# 256x256 = 65,536
+MIN_NOTE = 32 # smallest possible note, 32nd note
+DIM = 256 
+SIZE = DIM ** 2
+NUM_TRACKS = 4
 
-def pngToMidi():
+def pngToMidi(imgfile,midifile):
 
-    DIM = 512
-    SIZE = DIM ** 2
-    NUM_TRACKS = 4
     offset = int(SIZE / NUM_TRACKS)
 
     # create midifile
     midi = MidiFile()
-
-    # load image file
-    imgfile = "song.png"
 
     img = cv2.imread(imgfile,cv2.IMREAD_GRAYSCALE)
     array = np.asarray(img)
@@ -55,18 +54,10 @@ def pngToMidi():
             else:
                 count += 1
 
-    midi.save('png_song.mid')
+    # save out to midi
+    midi.save(midifile)
 
-
-def midiToPng():
-
-    # 128x128 = 16384
-    # 256x256 = 65,536
-
-    song = "new_song.mid"
-    DIM = 512
-    SIZE = DIM**2
-    NUM_TRACKS = 4
+def midiToPng(song,image):
 
     array = np.zeros(SIZE,np.uint8)
 
@@ -116,12 +107,12 @@ def midiToPng():
             n += 1
 
     array = np.reshape(array, (DIM, DIM))
-    cv2.imwrite('song.png',array)
+    cv2.imwrite(image,array)
 
 if __name__ == "__main__":
 
-    midiToPng()
-    pngToMidi()
+    midiToPng("new_song.mid","song.png")
+    pngToMidi("song.png","png_song.mid")
     
 
         

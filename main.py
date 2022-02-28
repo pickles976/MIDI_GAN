@@ -22,10 +22,11 @@ print(div)
 
 # loop through all midi tracks
 for track in midi.tracks:
-    # print(track)
-    for message in track:
 
-        print(message)
+    # if len(track) < 24:
+    #         midi.tracks.remove(track)
+
+    for message in track:
 
         # normalize time, 1 == 32nd note
         if message.time:
@@ -41,5 +42,5 @@ midi.save('new_song.mid')
 m = MidiFile(type=1)
 m.ticks_per_beat = MIN_NOTE
 m.tracks.append(midi.tracks[0])
-m.tracks.append(midi.tracks[2])
+m.tracks.append(midi.tracks[1])
 m.save('isolated.mid')

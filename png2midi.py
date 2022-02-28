@@ -24,16 +24,21 @@ array = np.asarray(img)
 array = np.reshape(array,65536)
 
 currentNote = 0
+prevNote = 0
 count = 0
+
 for i in range(0,16248,1):
 
     # if the current spot in the array is a new note
     if array[i] != currentNote:
 
-        # append the note_on
-        track.append(Message("note_on",velocity=100,note=currentNote,time=0))
-        # append the note_off
-        track.append(Message("note_on",velocity=0,note=currentNote,time=count))
+        # append the previous note
+        if currentNote == 0: # the preceeding note was a rest
+            track.append(Message("note_on",velocity=100,note=array[i],time=count))
+        else: # the preceeding note was another note
+            track.append(Message("note_on",velocity=0,note=currentNote,time=count))
+            if array[i] != 0:
+                track.append(Message("note_on",velocity=100,note=array[i],time=0))
 
         # update the current note and count
         currentNote = array[i]

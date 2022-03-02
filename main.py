@@ -1,30 +1,95 @@
-from utils import preProcess, midiToPng, pngToMidi
-import subprocess
-import os
+from mido import MidiFile, MidiTrack
+from utils import midiToPng, preProcess, pngToMidi
 
-# RAW, PROCESS = "NES_MIDI_RAW","NES_MIDI_PROCESS"
-# PNG, FINAL = "NES_PNG","NES_PNG_MIDI"
+song = "002_1943_TheBattleofMidway_03_04AirBattleA.mid"
+# song3 = "045_Castlevania_01_02VampireKiller.mid"
 
-RAW, PROCESS = "GB_MIDI_RAW","GB_MIDI_PROCESS"
-PNG, FINAL = "GB_PNG","GB_PNG_MIDI"
+midi = MidiFile(song,type=1,clip=True)
+
+j = 0
+for message in midi.tracks[1]:
+    if j < 20:
+        print(message)
+    j += 1
+
+i = 0
+for track in midi.tracks:
+
+    if i > 0:
+
+        newTrack = []
+        note1,note2 = [],[]
+
+        j = 0
+        for message in track:
+
+            if not message.is_meta:
+
+                message.channel = i - 1
+
+                # if there is a current Note1 candidate
+                if len(note1) > 0:
+                    if message.type == "note_on":
+                        if message.note == note1[0].note:
+                            
+                            # prevent zero-duration note
+                            if note2:
+                                temp = message.time
+                                message.time = note2[0].time
+                                note2[0].time = temp
+
+                            note1.append(message)
+                            for m in note1:
+                                newTrack.append(m)
+                            note1 = note2
+                            note2 = []
+                        else:
+                            if message.velocity != 0:
+                                message.velocity = 100
+                            note2.append(message)
+                    else:
+                        note1.append(message)
+                else:
+                    if message.type == "note_on":
+                        message.velocity = 100
+                        note1.append(message)
+                    else:
+                        newTrack.append(message)
+
+            else:
+                newTrack.append(message)
+
+        else:
+            newTrack.append(message)
+
+        midi.tracks[i] = newTrack
+
+    i += 1
+    
+midi.save("vampire.mid")
+
+print("New File: ")
+
+j = 0
+for msg in midi.tracks[1]:
+    if j < 20:
+        print(msg)
+    j += 1
 
 
-# pre-process files
-for fn in os.listdir(RAW):
+# preProcess("vampire.mid","vampire_process.mid")
 
-    infile,outfile = os.path.join(RAW,fn), os.path.join(PROCESS,fn)
-    preProcess(infile,outfile)
+# midi2 = MidiFile("vampire_process.mid")
 
-# MIDI files to PNG
-for fn in os.listdir(PROCESS):
+# for track in midi2.tracks[0]:
+#     print(track)
 
-    name = fn.split(".")[0]
-    infile,outfile = os.path.join(PROCESS,fn),os.path.join(PNG,name+".png")
-    midiToPng(infile,outfile)
+# midi2 = MidiFile("vampire_process.mid")
 
-# PNG back to MIDI
-for fn in os.listdir(PNG):
+# midiToPng("vampire_process.mid","vampire.png")
+# pngToMidi("vampire.png","test.mid")
 
-    name = fn.split(".")[0]
-    infile,outfile = os.path.join(PNG,fn),os.path.join(FINAL,name+".mid")
-    pngToMidi(infile,outfile)
+# midi3 = MidiFile("test.mid")
+
+
+

@@ -6,7 +6,7 @@ import sys
 # 128x128 = 16384
 # 256x256 = 65,536
 MIN_NOTE = 32 # smallest possible note, 32nd note
-MIN_VALUE = 500000 # approx length of song
+MIN_VALUE = 250000 # approx length of song
 DIM = 256 
 SIZE = DIM ** 2
 NUM_TRACKS = 4
@@ -41,13 +41,30 @@ def preProcess(song,newsong):
         for track in midi.tracks:
             
             # print(track)
-
+            note_on = None
             i = 0
             for message in track:
 
                 # normalize time, 1 == 32nd note
                 if message.time:
                     message.time = int(message.time / div)
+
+                # if message.time:
+                #     time = int(message.time / div)
+                #     message.time = time
+
+                #     # if note
+                #     if message.type == note_on:
+
+                #         # if note on
+                #         if message.velocity != 0:
+                #             note_on = message
+                #         else: # if note off
+                #             if time < 1: # no duration note
+                #                 track.remove(note_on)
+                #                 track.remove(message)
+
+
 
                 # normalize data format
                 if message.type and message.type == "note_off":
@@ -59,7 +76,7 @@ def preProcess(song,newsong):
         midi.save(newsong)
 
     except:
-        print("Pr-Processing failed!")
+        print("Pre-Processing failed!")
 
 def pngToMidi(imgfile,midifile):
 
@@ -178,7 +195,7 @@ def midiToPng(song,image):
             array = np.reshape(array, (DIM, DIM))
             cv2.imwrite(image,array)
         else: 
-            print("Song was too short!")
+            print(f"Song was too short! {total}")
 
     except:
         print(f"Failed to convert {song}")

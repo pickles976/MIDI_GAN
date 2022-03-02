@@ -1,26 +1,26 @@
-from mido import MidiFile, MidiTrack
+from mido import MidiFile, MidiTrack, Message
 from utils import midiToPng, preProcess, pngToMidi
 
-song = "002_1943_TheBattleofMidway_03_04AirBattleA.mid"
-# song3 = "045_Castlevania_01_02VampireKiller.mid"
+# song = "002_1943_TheBattleofMidway_03_04AirBattleA.mid"
+# song = "045_Castlevania_01_02VampireKiller.mid"
+song = "323_SuperMarioBros_2_02_03Overworld.mid"
 
 midi = MidiFile(song,type=1,clip=True)
 
-# j = 0
-# for message in midi.tracks[1]:
-#     if j < 20:
-#         print(message)
-#     j += 1
-
 def standardizeTrack(midi):
+    """ Removes zero-duration notes and pads the empty space with
+        a dummy control-change
+
+    """
 
     i = 0
     for track in midi.tracks:
 
+        # skip metadata track
         if i > 0:
 
             newTrack = []
-            note1,note2 = [],[]
+            note1,note2 = [],[] # using dynamic-programming to un-overlap overlapping notes
 
             j = 0
             for message in track:
@@ -31,46 +31,48 @@ def standardizeTrack(midi):
 
                     # if there is a current Note1 candidate
                     if len(note1) > 0:
-                        if message.type == "note_on":
-                            if message.note == note1[0].note:
+                        if message.type == "note_on": # if note message
+                            if message.note == note1[0].note: # if note matches last note
                                 
-                                # prevent zero-duration note
+                                # swap note durations to cancel overlap
                                 if note2:
                                     temp = message.time
                                     message.time = note2[0].time
                                     note2[0].time = temp
 
+                                # add note1 to the track and clear note2, push note2 onto the note1 stack
                                 note1.append(message)
                                 for m in note1:
                                     newTrack.append(m)
                                 note1 = note2
                                 note2 = []
-                            else:
+                            else: # max out the volume, get the overlapping note
                                 if message.velocity != 0:
                                     message.velocity = 100
                                 note2.append(message)
-                        else:
+                        else: # just append control statements to note1
                             note1.append(message)
-                    else:
-                        if message.type == "note_on":
+                    else: # note1 is empty, either it's the start of the track-- or no overlaps have occured
+                        if message.type == "note_on": # max out the volume and initialize note1 stack
                             message.velocity = 100
                             note1.append(message)
                         else:
-                            newTrack.append(message)
+                            newTrack.append(message) # just append empty control messages
 
-                else:
+                else: # append meta messages
                     newTrack.append(message)
 
-            else:
-                newTrack.append(message)
-
+            # replace with fixed track
             midi.tracks[i] = newTrack
 
+        # print(track)
         i += 1
 
     return midi
 
 def removeNullNotes(midi):
+    """ Removes the zero-duration notes created during the de-overlapping process.
+    """
 
     print("Removing null notes")
 
@@ -96,23 +98,14 @@ def removeNullNotes(midi):
                             note_off = j
                         else: # note on
                             if newTrack[note_off].time == 0:
-                                print(f"{message},{newTrack[note_off]}")
-                                if message.time != 0:
-                                    newTrack[note_off].time = message.time
-                                    newTrack[j].time = 0
-                                else:
-                                    print(note_off,j,len(newTrack))
-                                    newTrack.pop(note_off)
-                                    newTrack.pop(j)
+                                # replace missing note with control change
+                                newTrack[note_off] = Message("control_change",channel=message.channel,control=7,value=10,time=message.time)
+                                newTrack.pop(j)
 
             midi.tracks[i] = newTrack
 
         i += 1
-
     return midi
-
-
-
 
 
 # standardize the midi track
@@ -124,31 +117,11 @@ preProcess("vampire.mid","vampire_process.mid")
 midi2 = MidiFile("vampire_process.mid")
 
 # remove all of the zero-duration notes from the midi track
-midi2 = removeNullNotes(midi2)
-midi2.save("vampire_fixed.mid")
+midi3 = removeNullNotes(midi2)
+midi3.save("vampire_fixed.mid")
 
-# # print("New File: ")
-
-# # j = 0
-# # for msg in midi.tracks[1]:
-# #     if j < 20:
-# #         print(msg)
-# #     j += 1
-
-
-# preProcess("vampire.mid","vampire_process.mid")
-
-# midi2 = MidiFile("vampire_process.mid")
-
-# # for track in midi2.tracks[0]:
-# #     print(track)
-
-# # midi2 = MidiFile("vampire.mid")
-
-# midiToPng("vampire_process.mid","vampire.png")
-# pngToMidi("vampire.png","test.mid")
-
-# midi3 = MidiFile("test.mid")
+midiToPng("vampire_fixed.mid","vampire.png")
+pngToMidi("vampire.png","test.mid")
 
 
 

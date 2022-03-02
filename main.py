@@ -3,7 +3,8 @@ from utils import midiToPng, preProcess, pngToMidi
 
 # song = "002_1943_TheBattleofMidway_03_04AirBattleA.mid"
 # song = "045_Castlevania_01_02VampireKiller.mid"
-song = "323_SuperMarioBros_2_02_03Overworld.mid"
+# song = "323_SuperMarioBros_2_02_03Overworld.mid"
+song = "PkmGS-Battle1.mid"
 
 midi = MidiFile(song,type=1,clip=True)
 
@@ -108,20 +109,24 @@ def removeNullNotes(midi):
     return midi
 
 
+preProcess(song,"pre.mid")
+midiToPng("pre.mid","pre.png")
+pngToMidi("pre.png","png.mid")
+
 # standardize the midi track
-midi = standardizeTrack(midi)    
-midi.save("vampire.mid")
+# midi = standardizeTrack(midi)    
+# midi.save("vampire.mid")
 
-# pre-process the midi track
-preProcess("vampire.mid","vampire_process.mid")
-midi2 = MidiFile("vampire_process.mid")
+# # pre-process the midi track
+# preProcess("vampire.mid","vampire_process.mid")
+# midi2 = MidiFile("vampire_process.mid")
 
-# remove all of the zero-duration notes from the midi track
-midi3 = removeNullNotes(midi2)
-midi3.save("vampire_fixed.mid")
+# # remove all of the zero-duration notes from the midi track
+# midi3 = removeNullNotes(midi2)
+# midi3.save("vampire_fixed.mid")
 
-midiToPng("vampire_fixed.mid","vampire.png")
-pngToMidi("vampire.png","test.mid")
+# midiToPng("vampire_fixed.mid","vampire.png")
+# pngToMidi("vampire.png","test.mid")
 
 
 

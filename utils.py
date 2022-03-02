@@ -15,68 +15,51 @@ def preProcess(song,newsong):
 
     print(f"Processing {song}")
 
-    try:
+    # try:
 
-        midi = MidiFile(song)
-        midi.type = 1
+    midi = MidiFile(song)
+    midi.type = 1
 
-        tpb = midi.ticks_per_beat   # normalize the ticks per beat
-        midi.ticks_per_beat = MIN_NOTE
-        div = tpb / MIN_NOTE
+    tpb = midi.ticks_per_beat   # normalize the ticks per beat
+    midi.ticks_per_beat = MIN_NOTE
+    div = tpb / MIN_NOTE
 
-        # remove duplicate tracks
-        message_numbers = []
-        duplicates = []
+    # remove duplicate tracks
+    message_numbers = []
+    duplicates = []
 
-        for track in midi.tracks:
-            if len(track) in message_numbers:
-                duplicates.append(track)
-            else:
-                message_numbers.append(len(track))
+    for track in midi.tracks:
+        if len(track) in message_numbers:
+            duplicates.append(track)
+        else:
+            message_numbers.append(len(track))
 
-        for track in duplicates:
-            midi.tracks.remove(track)
+    for track in duplicates:
+        midi.tracks.remove(track)
 
-        # loop through all midi tracks
-        for track in midi.tracks:
-            
-            # print(track)
-            note_on = None
-            i = 0
-            for message in track:
+    # loop through all midi tracks
+    for track in midi.tracks:
+        
+        # print(track)
+        note_on = None
+        i = 0
+        for message in track:
 
-                # normalize time, 1 == 32nd note
-                if message.time:
-                    message.time = int(message.time / div)
+            # normalize time, 1 == 32nd note
+            if message.time:
+                message.time = int(message.time / div)
 
-                # if message.time:
-                #     time = int(message.time / div)
-                #     message.time = time
+            # normalize data format
+            if message.type and message.type == "note_off":
+                track[i] = Message('note_on', channel=message.channel,note=message.note, velocity=0, time=message.time)
 
-                #     # if note
-                #     if message.type == note_on:
+            i += 1
 
-                #         # if note on
-                #         if message.velocity != 0:
-                #             note_on = message
-                #         else: # if note off
-                #             if time < 1: # no duration note
-                #                 track.remove(note_on)
-                #                 track.remove(message)
+    # save the midi with normalized timestamps
+    midi.save(newsong)
 
-
-
-                # normalize data format
-                if message.type and message.type == "note_off":
-                    track[i] = Message('note_on', channel=message.channel,note=message.note, velocity=0, time=message.time)
-
-                i += 1
-
-        # save the midi with normalized timestamps
-        midi.save(newsong)
-
-    except:
-        print("Pre-Processing failed!")
+    # except:
+    #     print("Pre-Processing failed!")
 
 def pngToMidi(imgfile,midifile):
 

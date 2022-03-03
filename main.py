@@ -1,12 +1,11 @@
 from mido import MidiFile, MidiTrack, Message
-from utils import midiToPng, preProcess, pngToMidi
+from utils import midiToPng, preProcess, pngToMidi, midiToPng2
 
 # song = "002_1943_TheBattleofMidway_03_04AirBattleA.mid"
 # song = "045_Castlevania_01_02VampireKiller.mid"
 # song = "323_SuperMarioBros_2_02_03Overworld.mid"
-song = "PkmGS-Battle1.mid"
-
-midi = MidiFile(song,type=1,clip=True)
+# song = "PkmGS-Battle1.mid"
+# song = "1943-lev1.mid"
 
 def standardizeTrack(midi):
     """ Removes zero-duration notes and pads the empty space with
@@ -99,7 +98,7 @@ def removeNullNotes(midi):
                             note_off = j
                         else: # note on
                             if newTrack[note_off].time == 0:
-                                # replace missing note with control change
+                                # replace missing note with control change (duration 1 notes break songs)
                                 newTrack[note_off] = Message("control_change",channel=message.channel,control=7,value=10,time=message.time)
                                 newTrack.pop(j)
 
@@ -109,24 +108,30 @@ def removeNullNotes(midi):
     return midi
 
 
-preProcess(song,"pre.mid")
-midiToPng("pre.mid","pre.png")
-pngToMidi("pre.png","png.mid")
+# # NES DB MIDI FORMAT
 
-# standardize the midi track
-# midi = standardizeTrack(midi)    
-# midi.save("vampire.mid")
+# midi = MidiFile(song,type=1,clip=True)
+
+# # standardize the midi track
+# midi = standardizeTrack(midi)
+
+# midi.save("standardized.mid")
 
 # # pre-process the midi track
-# preProcess("vampire.mid","vampire_process.mid")
-# midi2 = MidiFile("vampire_process.mid")
+# preProcess("standardized.mid","processed.mid")
+# midi2 = MidiFile("processed.mid")
 
-# # remove all of the zero-duration notes from the midi track
+# # # # remove all of the zero-duration notes from the midi track
 # midi3 = removeNullNotes(midi2)
-# midi3.save("vampire_fixed.mid")
 
-# midiToPng("vampire_fixed.mid","vampire.png")
-# pngToMidi("vampire.png","test.mid")
+# # for message in midi3.tracks[2]:
+# #     print(message)
 
+# midi3.save("fixed.mid")
 
+# midiToPng2("fixed.mid","fixed.png")
+# pngToMidi("fixed.png","out.mid")
 
+# # midi4 = MidiFile("out.mid")
+# # for message in midi4.tracks[0]:
+# #     print(message)
